@@ -14,8 +14,8 @@ def check_column_homo(df):
   """
   check each column of a dataframe to see if all of its columns are homogeneous (having same dtype across all elements)
 
-  :param df: a dataframe type of dataset
-  :return: a dataframe contains information about whether the input dataframe has homogeneous columns (if each coulmn has data of the same dtype)
+  :param df: a pandas dataframe type of dataset
+  :return: a pandas dataframe contains information about whether the input dataframe has homogeneous columns (if each coulmn has data of the same dtype)
            each row of the returned dataframe corresponds to a column of df
            column is_same_type: bool, whether each column in df is homogeneous
            column dtype_count: int, how many types of dtype are in each column of df, if one column in df is homogenous, the value in this column is 1
@@ -39,3 +39,25 @@ def check_column_homo(df):
           'dtype_count': dtypeCountList,
           'dtype_list': dtypeList}
   return pd.DataFrame(data, index = colNames)
+
+def check_miss_timestep(df, timeCol, maxTime, minTime, interval):
+  """
+  check a dataframe with a time series column, whether it has missing time steps
+
+  :param df: a pandas dataframe type of dataset that contains one column that record timestamps as time series
+  :param timeCol: string, the name of the column that contains the time series timestamps, the column is already converted to pandas timestamp format
+  :param maxTime: pandas timestamp, the max time in the time series the user wants to include in the time series analysis
+  :param minTime: pandas timestamp, the minimum time in the time series the user wants to include in the time series analysis
+  :interval: in np.timedelta, the time interval between each time step of the timeseries analysis
+  :return: isMissed: bool, whether this dataframe has missing time steps
+           missedSteps: np.array, contains all time steps that are missing in the current df
+           fullTimesSpan: np.array, contains all time steps that supposed to be in the time serious analysis when there is no missing time step
+  """
+  fullTimeSpan = np.arange(minTime, maxTime + interval, interval).astype('datetime64[ns]')
+  dfTimeArray = np.array(df[timeCol]).astype('datetime64[ns]')
+  isMissed = not np.array_equal(fullTimeSpan, dfTimeArray)
+  if isMissed == True:
+    missedSteps = np.array(set(fullTimeSpan) - set(dfTimeArray))
+  else:
+    missedSteps = np.nan
+  return isMissed, missedSteps, fullTimeSpan
