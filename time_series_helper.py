@@ -55,9 +55,114 @@ def check_miss_timestep(df, timeCol, maxTime, minTime, interval):
   """
   fullTimeSpan = np.arange(minTime, maxTime + interval, interval).astype('datetime64[ns]')
   dfTimeArray = np.array(df[timeCol]).astype('datetime64[ns]')
-  isMissed = not np.array_equal(fullTimeSpan, dfTimeArray)
+  isMissed = not np.array_equal(np.sort(fullTimeSpan.flat), np.sort(dfTimeArray.flat)) #compare the 2 arraies without considering order
   if isMissed == True:
     missedSteps = np.array(set(fullTimeSpan) - set(dfTimeArray))
   else:
     missedSteps = np.nan
   return isMissed, missedSteps, fullTimeSpan
+
+def fill_miss_step(df, timeCol, fullTimeSpan, fillValue = np.nan):
+  """
+  add the missing time steps to the pandas dataframe as  used in time series analysis and fill 
+
+  :param df: a pandas dataframe type of dataset that contains one column that record timestamps as time series
+  :param timeCol: string, the name of the column that contains the time series timestamps, the column is already converted to pandas timestamp format
+  :param maxTime: pandas timestamp, the max time in the time series the user wants to include in the time series analysis
+  :param minTime: pandas timestamp, the minimum time in the time series the user wants to include in the time series analysis
+  :interval: in np.timedelta, the time interval between each time step of the timeseries analysis
+  :fillValue: default np.nan, the value the user to fill across all columns for the newly added 
+  :return: isMissed: bool, whether this dataframe has missing time steps
+           missedSteps: np.array, contains all time steps that are missing in the current df
+           fullTimesSpan: np.array, contains all time steps that supposed to be in the time serious analysis when there is no missing time step
+  """
+  df = df.set_index(timeCol)
+  df = df.reindex(fullTimeSpan, fill_value = fillValue)
+  df = df.reset_index()
+  return df
+
+def split_df_by_col(df, splitCol):
+  """
+  Split a pandas dataframe into a list of dataframes by the unique values of one column, the resulting dataframes have the same columns with the original dataframe
+
+  :param df: a pandas dataframe that the user wish to be split
+  :param splitCol: string, the name of the column that the user wish to split the original dataframe by
+  :return: listDf: a list of pandas dataframes 
+  """
+  dfGroup = df.groupby(df[splitCol])
+  splitValList = list(set(df[splitCol]))
+  listDf = []
+  for splitVal in splitValList:
+    dfSplit = dfGroup.get_group(splitVal)
+    listDf.append(dfSplit)
+  return listDf
+
+def fill_split_df_miss_step(df, timeCol, splitCol, maxTime, minTime, interval, fillValue):
+  """
+  Split a pandas dataframe into a list of dataframes by the unique values of one colum, then identify if each subdataframe is missing time steps, if yes, fill out the missing steps.
+
+  :param df: a pandas dataframe that contain time series and the user wish to have it split and filled 
+  :param timeCol: string, the name of the column that contains the time series timestamps, the column is already converted to pandas timestamp format
+  :param splitCol: string, the name of the column that the user wish to split the original dataframe by
+  :param maxTime: pandas timestamp, the max time in the time series the user wants to include in the time series analysis
+  :param minTime: pandas timestamp, the minimum time in the time series the user wants to include in the time series analysis
+  :interval: in np.timedelta, the time interval between each time step of the timeseries analysis
+  :fillValue: default np.nan, the value the user to fill across all columns for the newly added 
+  :return: listDfFilled: a list of pandas dataframes that has all subdataframes with missing time steps filled
+           listMissedSteps: a list of np.arrays, same length of the list of dataframes, each element contains all the time steps that corresponding subdataframe is missing
+           listSplitCol: a list of value corresponding to the unique values of splitCol, with sequence matching listDfFilled and listMissedSteps
+  """
+  listDf = split_df_by_col(df, splitCol)
+  listDfFilled = []
+  listMissedStep = []
+  listSplitCol = []
+  for dfSplit in listDf:
+    dfMissed, dfMissedSteps, dfFullSpan = check_miss_timestep(dfSplit, timeCol, maxTime, minTime, interval)
+    if dfMissed == True:
+      splitVal = list(set(dfSplit[splitCol]))
+      dfSplit = fill_miss_step(dfSplit, timeCol, dfFullSpan, fillValue)
+      dfSplit[splitCol] = splitVal * len(dfFullSpan)
+    else:
+      dfSplit = dfSplit
+    listDfFilled.append(dfSplit)
+    listMissedStep.append(dfMissedSteps)
+    listSplitCol.append(list(set(dfSplit[splitCol]))[0])
+  return listDfFilled, listMissedStep, listSplitCol
+
+def extend_datetime(df, timeGranularity, timeCol):
+  """
+  Enrich the timestamps in a pandas dataframe by creating new columns derived from the timestamps. This could make operation on different level of time easier.
+
+  :param df: a pandas dataframe that the user wish to enrich
+  :param timeGranularity: a list of string(s), the time granularities that the user wish to derived from the timestamps. It takes values 'year', 'month', 'day', 'hour', 'minute', 'second', 'time_of_day', 'date'
+  :return: df: the input dataframe with columns added corresponding to values in timeGranularity
+  """
+  dates = df[timeCol].to_numpy()
+  Y, M, D, h, m, s = [dates.astype('datetime64[%s]' % kind) for kind in 'YMDhms']
+
+  years = Y.astype(int) + 1970
+  months = M.astype(int) % 12 + 1
+  days = (D - M).astype(int) + 1
+  hours = (h - D).astype(int)
+  minutes = (m - h).astype(int)
+  seconds = (s - m).astype(int)
+  time_of_day = pd.to_datetime(dates).time
+
+  if 'year' in timeGranularity:
+    df['year'] = years
+  if 'month' in timeGranularity:
+    df['month'] = months
+  if 'day' in timeGranularity:
+    df['day'] = days
+  if 'hour' in timeGranularity:
+    df['hour'] = hours
+  if 'minute' in timeGranularity:
+    df['minute'] = minutes
+  if 'second' in timeGranularity:
+    df['second'] = seconds
+  if 'time_of_day' in timeGranularity:
+    df['time_of_day'] = time_of_day
+  if 'date' in timeGranularity:
+    df['date_only'] = D
+  
+  return df
