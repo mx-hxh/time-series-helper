@@ -8,7 +8,7 @@ A simole Python module created to make time series analysis easier. It mainly he
 	 - Pandas
 	 - Numpy
 ## Colab Demo
-https://colab.research.google.com/drive/1SaHahlVM7IgaT-wMa3kw_4WCz2ea-8tR?usp=sharing
+<a  href="https://colab.research.google.com/drive/1SaHahlVM7IgaT-wMa3kw_4WCz2ea-8tR?usp=sharing"  target="_parent"><img  src="https://colab.research.google.com/assets/colab-badge.svg"  alt="Open in Colab"/></a>
 ## License
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ## Contact
@@ -17,6 +17,6 @@ LinkedIn: https://www.linkedin.com/in/miao-xi/
 
 > Written with [StackEdit](https://stackedit.io/).
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIwNTQ0NzI1NDksLTIxMjI1MjU2MjZdfQ
-==
+eyJoaXN0b3J5IjpbLTE1NTQyNTExNzMsLTIwNTQ0NzI1NDksLT
+IxMjI1MjU2MjZdfQ==
 -->
