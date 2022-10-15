@@ -16,5 +16,4 @@ setup(
    author='Miao Xi',
    author_email='miao.xi@mail.utoronto.ca',
    packages=['timeSeriesHelper'],  #same as name
-   install_requires=['pandas', 'numpy'], #external packages as dependencies
 )
