@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/19PlIU96bqEzFokjzdaxMslQlV6DZ0jZ_
 """
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(
    name='timeSeriesHelper',
