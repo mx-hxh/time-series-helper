@@ -10,11 +10,11 @@ Original file is located at
 from setuptools import setup
 
 setup(
-   name='time_series_helper',
+   name='timeSeriesHelper',
    version='1.0',
    description='A module help with data inspection, cleaning, identifying and filling missing time steps for time series analysis',
    author='Miao Xi',
    author_email='miao.xi@mail.utoronto.ca',
-   packages=['time_series_helper'],  #same as name
+   packages=['timeSeriesHelper'],  #same as name
    install_requires=['pandas', 'numpy'], #external packages as dependencies
 )
